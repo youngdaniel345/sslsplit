@@ -120,9 +120,13 @@ typedef struct pxy_conn_lproc_desc {
 } pxy_conn_lproc_desc_t;
 #endif /* HAVE_LOCAL_PROCINFO */
 
+// connection counter
+unsigned int connection_id;
+
 /* actual proxy connection state consisting of two connection descriptors,
  * connection-wide state and the specs and options */
 typedef struct pxy_conn_ctx {
+
 	/* per-connection state */
 	struct pxy_conn_desc src;
 	struct pxy_conn_desc dst;
@@ -2123,10 +2127,12 @@ connected:
 				 * beginning; mirror SSL debug output anyway
 				 * in order not to confuse anyone who might be
 				 * looking closely at the output */
-				log_dbg_printf("TCP connected to [%s]:%s\n",
-				               ctx->dsthost_str,
+				log_dbg_printf("Connection ID: %d, TCP connected to [%s]:%s\n",
+				               connection_id,
+											 ctx->dsthost_str,
 				               ctx->dstport_str);
-				log_dbg_printf("TCP connected from [%s]:%s\n",
+				log_dbg_printf("Connection ID: %d, TCP connected from [%s]:%s\n",
+											 connection_id,
 				               ctx->srchost_str,
 				               ctx->srcport_str);
 			}
@@ -2299,13 +2305,16 @@ connected:
 leave:
 	/* we only get a single disconnect event here for both connections */
 	if (OPTS_DEBUG(ctx->opts)) {
-		log_dbg_printf("%s disconnected to [%s]:%s\n",
+		log_dbg_printf("Connection ID: %d, %s disconnected to [%s]:%s\n",
+									 connection_id,
 		               this->ssl ? "SSL" : "TCP",
 		               STRORDASH(ctx->dsthost_str),
 		               STRORDASH(ctx->dstport_str));
-		log_dbg_printf("%s disconnected from [%s]:%s\n",
+		log_dbg_printf("Connection ID: %d, %s disconnected from [%s]:%s\n",
+									 connection_id,
 		               this->ssl ? "SSL" : "TCP",
 		               ctx->srchost_str, ctx->srcport_str);
+	  connection_id++;
 	}
 
 	this->closed = 1;
